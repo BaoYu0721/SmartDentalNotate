@@ -87,7 +87,7 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 	
 	float minScaleR; //最小缩放比例
 	static final float MAX_SCALE = 5f; //最大缩放比例
-	static final float MIN_SCALE = 1f;
+	static final float MIN_SCALE = 0.5f;
 	
 	static final int  NONE = 0;  //初始状态
 	static final int DRAG = 1; //拖动
@@ -149,8 +149,8 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 	        //bmImage.setImageBitmap(tmp);
 	    	selectItem(0);
 	        matrix.set(savedMatrix);
-			CheckView();
 			minZoom();
+			CheckView();
 			bmImage.setImageMatrix(matrix);
 			
 			
