@@ -12,11 +12,6 @@ public class DrawNotateClass {
 	private ArrayList<ArrayList<Integer>> pointX;
 	private ArrayList<ArrayList<Integer>> pointY;
 	
-//	private swapPoints(int x1, int y1, int x2, int y2){
-//		swap(x1, x2);
-//		Math.
-//	}
-	
 	public DrawNotateClass(ArrayList<Integer> n, ArrayList<ArrayList<Integer>> px, ArrayList<ArrayList<Integer>> py) {
 		// TODO Auto-generated constructor stub
 		this.num_of_point = n;
@@ -30,20 +25,20 @@ public class DrawNotateClass {
     	int width = tmp.getWidth();
     	int height = tmp.getHeight();
     	//thickness length  ii+jj<?
-    	//     1      1        2
-    	//     2      3        3
-    	//     3      5        4
-    	//     4      7        5
-    	//     5      9        6
+    	//    1       1        2
+    	//    2       3        3
+    	//    3       5        4
+    	//    4       7        5
+    	//    5       9        6
     	for(int ii = -1*thickness+1; ii < thickness; ii++){
 			for(int jj = -1*thickness+1; jj < thickness; jj++){
-				if(x+ii > width || x+ii < 0)
+				if(x+ii >= width || x+ii < 0)
 					continue;
-				else if(y+jj > height || y+jj < 0)
+				else if(y+jj >= height || y+jj < 0)
 					continue;
-//				if(color == Color.GRAY)
-//					tmp.setPixel(x+ii, y+jj, Color.GRAY);
-//				else
+				if(color == Color.GRAY)
+					tmp.setPixel(x+ii, y+jj, Color.GRAY);
+				else
 					if(Math.abs(ii) + Math.abs(jj) < thickness+1)
 						tmp.setPixel(x+ii, y+jj, color);
 			}
@@ -54,7 +49,7 @@ public class DrawNotateClass {
     	if(x1 == x2){
     		if(y1 > y2){
     			int t = x1;  x1 = x2;	x2 = t;
-    			t = y1;		y1 = y2;	y2 = t;	    			
+    			t = y1;		 y1 = y2;	y2 = t;	    			
     		}
     		for(int j = y1; j <= y2; j++){
     			drawPoint(x1, j, thickness, tmp, color);
