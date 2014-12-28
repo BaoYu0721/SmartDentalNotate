@@ -1,6 +1,9 @@
 package com.edu.thss.smartdental;
 
+import java.awt.MultipleGradientPaint.ColorSpaceType;
+import java.awt.peer.CanvasPeer;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -12,11 +15,14 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import com.edu.thss.smartdental.model.general.DrawNotateClass;
+
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.R.integer;
+import android.R.xml;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -46,6 +52,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 //【画图】
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -55,7 +62,9 @@ import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.Rect;
-import android.view.View;
+import android.view.View; 
+import android.graphics.BitmapFactory;  
+
 
 /**
  * 一张图片浏览页面，实现缩放、拖动、自动居中
@@ -74,6 +83,7 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 	DisplayMetrics dm;
 	Button leftRotate;
 	Button rightRotate;
+	private Bitmap origin;
 	
 	float minScaleR; //最小缩放比例
 	static final float MAX_SCALE = 4f; //最大缩放比例
@@ -92,10 +102,12 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 
 	private ImageView MarkedRect;
 	private TextView NotateInfoName;
-	private int[][] rectPoint;
 	private Handler handler;
 	private String[] notate_info;
+	private ArrayList<Integer> num_of_point;
 	private int notate_num;
+	private ArrayList<ArrayList<Integer>> pointX;
+	private ArrayList<ArrayList<Integer>> pointY;
 	
 	
 	public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
@@ -105,7 +117,6 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 	    public DownloadImageTask(ImageView bmImage, Bitmap bitmap) {
 	        this.bmImage = bmImage;
 	        this.bitmap = bitmap;
-	        //this.bmImage.bitmap = bitmap;
 	    }
 
 	    protected Bitmap doInBackground(String... urls) {
@@ -122,50 +133,20 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 	        return mIcon11;
 	    }
 	    
-	    
-
 	    protected void onPostExecute(Bitmap result) {
 	    	Bitmap tmp = result.copy(result.getConfig(), true);
+	    	origin = result.copy(result.getConfig(), true);
+	    	//DrawNotateClass draw = new DrawNotateClass(num_of_point, pointX, pointY);
 	    	
-	    	for (int num = 0; num < notate_num; num++)
-	    	{
-	    		int thickness = 2; //笔画粗度为2*thickness+1
-	    		int x1 = rectPoint[num][0];//(int)(rectPoint[num][0]*width);
-	    		int y1 = rectPoint[num][1];//(int)(rectPoint[num][1]*height);
-	    		int x2 = rectPoint[num][2];//(int)(rectPoint[num][2]*width);
-	    		int y2 = rectPoint[num][3];//(int)(rectPoint[num][3]*height);
-	    		
-	    		for(int i = x1+thickness; i <= x2-thickness; i++)
-	    		{
-	    			for(int j = y1-thickness; j <= y1+thickness; j++)
-	    				tmp.setPixel(i, j, Color.RED);
-	    			for(int j = y2-thickness; j <= y2+thickness; j++)
-	    				tmp.setPixel(i, j, Color.RED);
-	    		}
-	    		for(int j = y1+thickness; j <= y2-thickness; j++)
-	    		{
-	    			for(int i = x1-thickness; i <= x1+thickness; i++)
-	    				tmp.setPixel(i, j, Color.RED);
-	    			for(int i = x2-thickness; i <= x2+thickness; i++)
-	    				tmp.setPixel(i, j, Color.RED);
-	    		}
-	    		for(int i = x1-thickness; i <= x1+thickness; i++)
-	    			for(int j = y1-thickness; j <= y1+thickness; j++)
-	    				tmp.setPixel(i, j, Color.RED);
-	    		for(int i = x2-thickness; i <= x2+thickness; i++)
-	    			for(int j = y2-thickness; j <= y2+thickness; j++)
-	    				tmp.setPixel(i, j, Color.RED);
-	    		for(int i = x1-thickness; i <= x1+thickness; i++)
-	    			for(int j = y2-thickness; j <= y2+thickness; j++)
-	    				tmp.setPixel(i, j, Color.RED);
-	    		for(int i = x2-thickness; i <= x2+thickness; i++)
-	    			for(int j = y1-thickness; j <= y1+thickness; j++)
-	    				tmp.setPixel(i, j, Color.RED);
-	    		
+	    	/*for(int i = 0;i < notate_num; i++){
+	    		draw.drawNotate(i, 1, tmp, Color.GRAY);   			
 	    	}
+	    	draw.drawNotate(0, 4, tmp, Color.RED); 
+	    	draw.drawNotate(1, 3, tmp, Color.BLUE);  
+	    	draw.drawNotate(2, 2, tmp, Color.GREEN); */ 
 	    	
-	        bmImage.setImageBitmap(tmp);
-			
+	        //bmImage.setImageBitmap(tmp);
+	    	selectItem(0);
 	        matrix.set(savedMatrix);
 			CheckView();
 			bmImage.setImageMatrix(matrix);
@@ -174,13 +155,19 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 	    }
 	}
 	
+	private void selectItem(int position) {
+		SetFocusOnNotationI(position);
+		mDrawerLayout.closeDrawer(mDrawerList);
+		NotateInfoName.setText(notate_info[position]);
+	}
+	
+	
 	private class DrawerItemClickListener implements
 		ListView.OnItemClickListener {
 		@Override
 		public void onItemClick(AdapterView<?> parent, View view, int position,
 				long id) {
-			mDrawerLayout.closeDrawer(mDrawerList);
-			NotateInfoName.setText(notate_info[position]);
+			selectItem(position);
 		}
 	}
 	
@@ -196,9 +183,15 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 		
 		getActionBar().setBackgroundDrawable(getResources().getDrawable(R.drawable.ab_bg));
 		
+		Intent intent = getIntent();
+		Bundle bundle = intent.getExtras();
+		final String tempclass = bundle.getString("imageclass");
+
 		mTitle = mDrawerTitle = getTitle();
 		notate_info = new String[1];
 		notate_info[0] = "没有标记";
+		notate_num = 0;
+		
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 		mDrawerList = (ListView) findViewById(R.id.left_drawer);
 		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
@@ -221,60 +214,66 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 		
 		NotateInfoName = (TextView)findViewById(R.id.notate_info_name);
 		MarkedRect = (ImageView)findViewById(R.id.one_image_view);
-		//bitmap = BitmapFactory.decodeResource(getResources(), this.getIntent().getExtras().getInt("IMG")); //获取图片资源
-		final int tempclass = getIntent().getExtras().getInt("imageclass");
-		
 		handler = new Handler(){
 		    @Override
-		    public void handleMessage(Message msg) {
+			
+			public void handleMessage(Message msg) {
 		        super.handleMessage(msg);
 		        Bundle data = msg.getData();
 		        String JSON = data.getString("result");
 		        String id=null, caseid=null, picurl = null;
-				try {
-		            JSONTokener jsonParser = new JSONTokener(JSON);
-		            JSONObject jsonObj = (JSONObject) jsonParser.nextValue(); 
-		            id = jsonObj.getString("_id");
-		            caseid = jsonObj.getString("caseid");
-		            picurl = jsonObj.getString("picurl");
-		            JSONArray notate = jsonObj.getJSONArray("notate");
-		            notate_num = notate.length();
-		            rectPoint = new int [notate_num][4];
-		            notate_info = new String [notate_num];
-		            for (int i = 0; i < notate_num; i++) {
-		                JSONObject jo = (JSONObject)notate.optJSONObject(i);
-		                rectPoint[i][0] = (int)jo.getDouble("x1");
-		                rectPoint[i][1] = (int)jo.getDouble("y1");
-		                rectPoint[i][2] = (int)jo.getDouble("x2");
-		                rectPoint[i][3] = (int)jo.getDouble("y2");
-		                notate_info[i] = jo.getString("data");
-		            }
-		            
-		            Log.v("debug", rectPoint[0][0] + " " + rectPoint[0][1] + " " + rectPoint[0][2] + " " + rectPoint[0][3]);
-		            
-		    		download.execute("http://166.111.80.119/" + picurl);
-		        } catch (Exception e) {
-		            e.printStackTrace();
-		        }
+		        
+		        try {
+					JSONTokener jsonParser = new JSONTokener(JSON);
+					JSONObject jsonObj = (JSONObject) jsonParser.nextValue();
+					id = jsonObj.getString("_id");
+					caseid = jsonObj.getString("caseid");
+					picurl = jsonObj.getString("picurl");
+					JSONArray notate = jsonObj.getJSONArray("notate");
+					notate_num = notate.length();
+					pointX = new ArrayList<ArrayList<Integer>>();
+					pointY = new ArrayList<ArrayList<Integer>>();
+					notate_info = new String [notate_num];
+					num_of_point = new ArrayList<Integer>();
+					for (int i = 0; i < notate_num; i++) {
+						JSONObject jo = (JSONObject)notate.optJSONObject(i);
+						JSONArray point = jo.getJSONArray("point");
+						num_of_point.add(point.length());
+						ArrayList<Integer> x = new ArrayList<Integer>();
+						ArrayList<Integer> y = new ArrayList<Integer>();
+						for (int j = 0; j < point.length(); j++) {
+							JSONObject jo1 = (JSONObject)point.optJSONObject(j);
+							x.add((int)jo1.getDouble("x"));
+							y.add((int)jo1.getDouble("y"));
+						}
+						pointX.add(x);
+						pointY.add(y);
+						notate_info[i] = "批注" + (i+1) + ":" + jo.getString("data");
+					}
+					
+					download.execute("http://166.111.80.119/" + picurl);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 
 		    }
 		};
+		
+		
 		Runnable runnable = new Runnable() {
 			
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
 				HttpClient client = new DefaultHttpClient();  
-		        String getURL = "http://166.111.80.119/getinfo?caseid=asd";
+		        String getURL = "http://166.111.80.119/getinfo?caseid=" + tempclass;
 		        HttpGet get = new HttpGet(getURL);
 		        String tString = "";
 		        try {
 					HttpResponse responseGet = client.execute(get);  
 			        HttpEntity resEntityGet = responseGet.getEntity();  
 			        if (resEntityGet != null) {  
-			                    //do something with the response
 			        	tString = EntityUtils.toString(resEntityGet);
-			        	
 			        }
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -291,6 +290,7 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 
 		Bitmap bitmap = BitmapFactory.decodeResource(OneImageActivity.this.getResources(),R.drawable.loading); //获取图片资源
 		download = new DownloadImageTask(MarkedRect, bitmap);
+		origin = bitmap.copy(bitmap.getConfig(), true);
 		
 		MarkedRect.setImageBitmap(download.bitmap); //填充控件
 		MarkedRect.setOnTouchListener(this); //触屏监听
@@ -303,11 +303,6 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 		rightRotate = (Button)findViewById(R.id.image_rightRotate);
 		leftRotate.setOnClickListener(this);
 		this.rightRotate.setOnClickListener(this);
-		
-		//imgView.setImageBitmap(mDrawCG.drawRect());
-		
-		//MarkedRect.showRect(rectPoint);
-		
 	}
 
 	@Override
@@ -485,6 +480,24 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 		// TODO Auto-generated method stub
 		super.onConfigurationChanged(newConfig);
 		mDrawerToggle.onConfigurationChanged(newConfig);
+	}
+	
+	private void SetFocusOnNotationI(int index) {
+		if (notate_num == 0) {
+			return;
+		}
+		int i;
+		Bitmap tmpBitmap = origin.copy(origin.getConfig(), true);
+		DrawNotateClass draw = new DrawNotateClass(num_of_point, pointX, pointY);
+		for (i = 0; i < notate_num; i++) {
+			if (i == index) {
+				draw.drawNotate(index, 5, tmpBitmap, Color.YELLOW);
+			}
+			else {
+				draw.drawNotate(i, 3, tmpBitmap, Color.GREEN);
+			}
+		}
+		MarkedRect.setImageBitmap(tmpBitmap);
 	}
 
 }
