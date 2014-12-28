@@ -21,6 +21,7 @@ import com.edu.thss.smartdental.model.general.HttpGetProcess;
 
 import android.R.bool;
 import android.R.id;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -32,6 +33,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -129,6 +131,7 @@ public class ImgTabAllFragment extends Fragment{
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		images = new ArrayList<ImageElement>();
+		
 		new HttpGetProcess(handler, JSON, new GetUrlByTag().GetUrl(tagnum), new GetImagesInfo()).start();
 	}
 	

@@ -36,11 +36,9 @@ public class DrawNotateClass {
 					continue;
 				else if(y+jj >= height || y+jj < 0)
 					continue;
-				if(color == Color.GRAY)
-					tmp.setPixel(x+ii, y+jj, Color.RED);
-				else
-					if(Math.abs(ii) + Math.abs(jj) < thickness+1)
-						tmp.setPixel(x+ii, y+jj, color);
+
+				if(Math.abs(ii) + Math.abs(jj) < thickness+1)
+					tmp.setPixel(x+ii, y+jj, color);
 			}
 		}
     }
@@ -59,7 +57,7 @@ public class DrawNotateClass {
     	if(y1 == y2){
     		if(x1 > x2){
     			int t = x1;  x1 = x2;	x2 = t;
-    			t = y1;		y1 = y2;	y2 = t;	    			
+    			t = y1;		 y1 = y2;	y2 = t;	    			
     		}
     		for(int i = x1; i <= x2; i++){
     			drawPoint(i, y1, thickness, tmp, color);
@@ -69,7 +67,7 @@ public class DrawNotateClass {
     	if(Math.abs(x1-x2) > Math.abs(y1-y2)){
     		if(x1 > x2){
     			int t = x1;  x1 = x2;	x2 = t;
-    			t = y1;		y1 = y2;	y2 = t;	    			
+    			t = y1;		 y1 = y2;	y2 = t;	    			
     		}
     		for(int i = x1; i <= x2; i++){
     			int drawedX = i;
@@ -96,13 +94,6 @@ public class DrawNotateClass {
     
     public void drawNotate(int index, int thickness, Bitmap tmp, int color)
     {
-    	for(int j = 1; j < num_of_point.get(index); j++){
-	    	int x1 = pointX.get(index).get(j-1);
-			int y1 = pointY.get(index).get(j-1);
-			int x2 = pointX.get(index).get(j);
-			int y2 = pointY.get(index).get(j);
-			drawSegment(x1, y1, x2, y2, thickness, tmp, Color.GRAY);
-		}
     	for(int j = 1; j < num_of_point.get(index); j++){
 	    	int x1 = pointX.get(index).get(j-1);
 			int y1 = pointY.get(index).get(j-1);

@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import com.edu.thss.smartdental.model.general.DrawNotateClass;
+import com.edu.thss.smartdental.model.general.HttpGetProcess;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -109,6 +110,7 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 	private int notate_num;
 	private ArrayList<ArrayList<Integer>> pointX;
 	private ArrayList<ArrayList<Integer>> pointY;
+	private String JSONInfo = "";
 	
 	
 	public class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
@@ -137,16 +139,7 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 	    protected void onPostExecute(Bitmap result) {
 	    	Bitmap tmp = result.copy(result.getConfig(), true);
 	    	origin = result.copy(result.getConfig(), true);
-	    	//DrawNotateClass draw = new DrawNotateClass(num_of_point, pointX, pointY);
 	    	
-	    	/*for(int i = 0;i < notate_num; i++){
-	    		draw.drawNotate(i, 1, tmp, Color.GRAY);   			
-	    	}
-	    	draw.drawNotate(0, 4, tmp, Color.RED); 
-	    	draw.drawNotate(1, 3, tmp, Color.BLUE);  
-	    	draw.drawNotate(2, 2, tmp, Color.GREEN); */ 
-	    	
-	        //bmImage.setImageBitmap(tmp);
 	    	selectItem(0);
 	        matrix.set(savedMatrix);
 			minZoom();
@@ -178,6 +171,44 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 		mDrawerList.setAdapter(new ArrayAdapter<String>(this, R.layout.drawer_list_item_image, notate_info));
 	}
 	
+	private class GetSingleImageInfo implements CallBackInterface {
+
+		@Override
+		public void CallBack(String src) {
+			// TODO Auto-generated method stub
+			try {
+				JSONTokener jsonParser = new JSONTokener(src);
+				JSONObject jsonObj = (JSONObject) jsonParser.nextValue();
+				String picurl = jsonObj.getString("picurl");
+				JSONArray notate = jsonObj.getJSONArray("notate");
+				notate_num = notate.length();
+				pointX = new ArrayList<ArrayList<Integer>>();
+				pointY = new ArrayList<ArrayList<Integer>>();
+				notate_info = new String [notate_num];
+				num_of_point = new ArrayList<Integer>();
+				for (int i = 0; i < notate_num; i++) {
+					JSONObject jo = (JSONObject)notate.optJSONObject(i);
+					JSONArray point = jo.getJSONArray("point");
+					num_of_point.add(point.length());
+					ArrayList<Integer> x = new ArrayList<Integer>();
+					ArrayList<Integer> y = new ArrayList<Integer>();
+					for (int j = 0; j < point.length(); j++) {
+						JSONObject jo1 = (JSONObject)point.optJSONObject(j);
+						x.add((int)jo1.getDouble("x"));
+						y.add((int)jo1.getDouble("y"));
+					}
+					pointX.add(x);
+					pointY.add(y);
+					notate_info[i] = "批注" + (i+1) + ":" + jo.getString("data");
+				}
+				
+				download.execute("http://166.111.80.119/" + picurl);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+	}
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -217,79 +248,8 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 		
 		NotateInfoName = (TextView)findViewById(R.id.notate_info_name);
 		MarkedRect = (ImageView)findViewById(R.id.one_image_view);
-		handler = new Handler(){
-		    @Override
-			
-			public void handleMessage(Message msg) {
-		        super.handleMessage(msg);
-		        Bundle data = msg.getData();
-		        String JSON = data.getString("result");
-		        String id=null, caseid=null, picurl = null;
-		        
-		        try {
-					JSONTokener jsonParser = new JSONTokener(JSON);
-					JSONObject jsonObj = (JSONObject) jsonParser.nextValue();
-					id = jsonObj.getString("_id");
-					caseid = jsonObj.getString("caseid");
-					picurl = jsonObj.getString("picurl");
-					JSONArray notate = jsonObj.getJSONArray("notate");
-					notate_num = notate.length();
-					pointX = new ArrayList<ArrayList<Integer>>();
-					pointY = new ArrayList<ArrayList<Integer>>();
-					notate_info = new String [notate_num];
-					num_of_point = new ArrayList<Integer>();
-					for (int i = 0; i < notate_num; i++) {
-						JSONObject jo = (JSONObject)notate.optJSONObject(i);
-						JSONArray point = jo.getJSONArray("point");
-						num_of_point.add(point.length());
-						ArrayList<Integer> x = new ArrayList<Integer>();
-						ArrayList<Integer> y = new ArrayList<Integer>();
-						for (int j = 0; j < point.length(); j++) {
-							JSONObject jo1 = (JSONObject)point.optJSONObject(j);
-							x.add((int)jo1.getDouble("x"));
-							y.add((int)jo1.getDouble("y"));
-						}
-						pointX.add(x);
-						pointY.add(y);
-						notate_info[i] = "批注" + (i+1) + ":" + jo.getString("data");
-					}
-					
-					download.execute("http://166.111.80.119/" + picurl);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-
-		    }
-		};
 		
-		
-		Runnable runnable = new Runnable() {
-			
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				HttpClient client = new DefaultHttpClient();  
-		        String getURL = "http://166.111.80.119/getinfo?caseid=" + tempclass;
-		        HttpGet get = new HttpGet(getURL);
-		        String tString = "";
-		        try {
-					HttpResponse responseGet = client.execute(get);  
-			        HttpEntity resEntityGet = responseGet.getEntity();  
-			        if (resEntityGet != null) {  
-			        	tString = EntityUtils.toString(resEntityGet);
-			        }
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-		        Message message = new Message();
-		        Bundle data = new Bundle();
-		        data.putString("result", tString);
-		        message.setData(data);
-		        handler.sendMessage(message);
-			}
-		};
-		new Thread(runnable).start();
-		
+		new HttpGetProcess(handler, JSONInfo, "http://166.111.80.119/getinfo?caseid=" + tempclass, new GetSingleImageInfo()).start();
 
 		Bitmap bitmap = BitmapFactory.decodeResource(OneImageActivity.this.getResources(),R.drawable.loading); //获取图片资源
 		download = new DownloadImageTask(MarkedRect, bitmap);
