@@ -86,7 +86,8 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 	private Bitmap origin;
 	
 	float minScaleR; //最小缩放比例
-	static final float MAX_SCALE = 4f; //最大缩放比例
+	static final float MAX_SCALE = 5f; //最大缩放比例
+	static final float MIN_SCALE = 1f;
 	
 	static final int  NONE = 0;  //初始状态
 	static final int DRAG = 1; //拖动
@@ -149,7 +150,9 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 	    	selectItem(0);
 	        matrix.set(savedMatrix);
 			CheckView();
+			minZoom();
 			bmImage.setImageMatrix(matrix);
+			
 			
 			UpdateNotateListView();
 	    }
@@ -337,7 +340,7 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 			if(dist > 10f){
 				//连续两点的距离大于10，多点模式
 				savedMatrix.set(matrix);
-				midPoint(mid,event);
+				midPoint(mid, event);
 				mode = ZOOM;
 			}
 			break;
@@ -373,10 +376,10 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 		float p[] = new float[9];
 		matrix.getValues(p);
 		/*if(mode == ZOOM){
-			if(p[0]<minScaleR){
+			if(p[0] < minScaleR) {
 				matrix.setScale(minScaleR, minScaleR);
 			}
-			if(p[0]>MAX_SCALE){
+			if(p[0] > MAX_SCALE) {
 				matrix.set(savedMatrix);
 			}
 		}*/
@@ -384,7 +387,9 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 		/*if(p[0]<minScaleR){
 			matrix.setScale(minScaleR, minScaleR);
 		}*/
-		if(p[0]>MAX_SCALE){
+		float scale = Math.abs(p[0] + p[3]);
+		Log.v("printscale", scale + "");
+		if(scale > MAX_SCALE || scale < MIN_SCALE){
 			matrix.set(savedMatrix);
 			//matrix.setScale(MAX_SCALE, MAX_SCALE);
 		}
@@ -491,12 +496,13 @@ public class OneImageActivity extends Activity implements OnTouchListener,OnClic
 		DrawNotateClass draw = new DrawNotateClass(num_of_point, pointX, pointY);
 		for (i = 0; i < notate_num; i++) {
 			if (i == index) {
-				draw.drawNotate(index, 5, tmpBitmap, Color.YELLOW);
+				continue;
 			}
 			else {
 				draw.drawNotate(i, 3, tmpBitmap, Color.GREEN);
 			}
 		}
+		draw.drawNotate(index, 5, tmpBitmap, Color.YELLOW);
 		MarkedRect.setImageBitmap(tmpBitmap);
 	}
 

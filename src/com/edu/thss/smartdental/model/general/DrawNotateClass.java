@@ -37,7 +37,7 @@ public class DrawNotateClass {
 				else if(y+jj >= height || y+jj < 0)
 					continue;
 				if(color == Color.GRAY)
-					tmp.setPixel(x+ii, y+jj, Color.GRAY);
+					tmp.setPixel(x+ii, y+jj, Color.RED);
 				else
 					if(Math.abs(ii) + Math.abs(jj) < thickness+1)
 						tmp.setPixel(x+ii, y+jj, color);
